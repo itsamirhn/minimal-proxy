@@ -1,0 +1,18 @@
+services:
+  server:
+    build:
+      context: ./server
+      args:
+        VLESS_UUID: ${VLESS_UUID}
+    expose:
+      - "443"
+
+  client:
+    build:
+      context: ./client
+      args:
+        VLESS_UUID: ${VLESS_UUID}
+    ports:
+      - "1080:1080"
+    depends_on:
+      - server
