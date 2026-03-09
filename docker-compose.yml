@@ -7,6 +7,18 @@ services:
     expose:
       - "443"
 
+  bridge:
+    build:
+      context: ./bridge
+    environment:
+      - UPSTREAM_HOST=${UPSTREAM_HOST:-server}
+      - UPSTREAM_PORT=${UPSTREAM_PORT:-443}
+      - LISTEN_PORT=443
+    expose:
+      - "443"
+    depends_on:
+      - server
+
   client:
     build:
       context: ./client
@@ -15,4 +27,4 @@ services:
     ports:
       - "1080:1080"
     depends_on:
-      - server
+      - bridge

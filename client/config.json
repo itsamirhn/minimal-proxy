@@ -15,7 +15,7 @@
       "settings": {
         "vnext": [
           {
-            "address": "server",
+            "address": "bridge",
             "port": 443,
             "users": [
               {
