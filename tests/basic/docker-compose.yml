@@ -1,0 +1,17 @@
+services:
+  server:
+    build:
+      context: ../../server
+    environment:
+      - VLESS_UUID=E5242418-1606-4737-88BD-0E6B289DC21E
+
+  client:
+    build:
+      context: ../../client
+    environment:
+      - VLESS_UUID=E5242418-1606-4737-88BD-0E6B289DC21E
+      - VLESS_ADDRESS=server
+    ports:
+      - "1080:1080"
+    depends_on:
+      - server

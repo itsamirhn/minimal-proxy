@@ -1,0 +1,34 @@
+networks:
+  restricted_network:
+    internal: true
+  shared_network:
+  public_network:
+
+services:
+  httpbin:
+    image: kennethreitz/httpbin
+    networks:
+      - restricted_network
+
+  bridge:
+    build:
+      context: ../../xbridge
+    environment:
+      - XRAY_CONFIG={"log":{"loglevel":"debug"},"reverse":{"bridges":[{"tag":"bridge","domain":"reverse.internal"}]},"outbounds":[{"tag":"interconn","protocol":"vless","settings":{"vnext":[{"address":"portal","port":443,"users":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","encryption":"none"}]}]},"streamSettings":{"network":"tcp"}},{"tag":"out","protocol":"freedom"}],"routing":{"rules":[{"inboundTag":["bridge"],"domain":["full:reverse.internal"],"outboundTag":"interconn"},{"inboundTag":["bridge"],"outboundTag":"out"}]}}
+    networks:
+      - restricted_network
+      - shared_network
+    depends_on:
+      - httpbin
+      - portal
+
+  portal:
+    build:
+      context: ../../xbridge
+    environment:
+      - XRAY_CONFIG={"log":{"loglevel":"debug"},"reverse":{"portals":[{"tag":"portal","domain":"reverse.internal"}]},"inbounds":[{"tag":"external","port":1080,"listen":"0.0.0.0","protocol":"socks","settings":{"auth":"noauth"}},{"tag":"interconn","port":443,"listen":"0.0.0.0","protocol":"vless","settings":{"clients":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E"}],"decryption":"none"},"streamSettings":{"network":"tcp"}}],"routing":{"rules":[{"inboundTag":["external"],"outboundTag":"portal"},{"inboundTag":["interconn"],"outboundTag":"portal"}]}}
+    networks:
+      - shared_network
+      - public_network
+    ports:
+      - "1080:1080"

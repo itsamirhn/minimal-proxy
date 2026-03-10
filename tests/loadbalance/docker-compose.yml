@@ -1,0 +1,32 @@
+services:
+  server1:
+    build:
+      context: ../../server
+    environment:
+      - VLESS_UUID=E5242418-1606-4737-88BD-0E6B289DC21E
+
+  server2:
+    build:
+      context: ../../server
+    environment:
+      - VLESS_UUID=E5242418-1606-4737-88BD-0E6B289DC21E
+
+  xbridge:
+    build:
+      context: ../../xbridge
+    environment:
+      - XRAY_CONFIG={"log":{"loglevel":"debug"},"inbounds":[{"port":443,"listen":"0.0.0.0","protocol":"vless","settings":{"clients":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","level":0}],"decryption":"none"},"streamSettings":{"network":"tcp"}}],"outbounds":[{"protocol":"vless","tag":"proxy1","settings":{"vnext":[{"address":"server1","port":443,"users":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","encryption":"none"}]}]},"streamSettings":{"network":"tcp"}},{"protocol":"vless","tag":"proxy2","settings":{"vnext":[{"address":"server2","port":443,"users":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","encryption":"none"}]}]},"streamSettings":{"network":"tcp"}}],"routing":{"rules":[{"type":"field","network":"tcp,udp","balancerTag":"lb"}],"balancers":[{"tag":"lb","selector":["proxy"],"strategy":{"type":"roundRobin"}}]},"burstObservatory":{"subjectSelector":["proxy"],"pingConfig":{"destination":"http://www.google.com/generate_204","interval":"10s","connectivity":"http://www.google.com/generate_204","timeout":"5s","sampling":2}}}
+    depends_on:
+      - server1
+      - server2
+
+  client:
+    build:
+      context: ../../client
+    environment:
+      - VLESS_UUID=E5242418-1606-4737-88BD-0E6B289DC21E
+      - VLESS_ADDRESS=xbridge
+    ports:
+      - "1080:1080"
+    depends_on:
+      - xbridge

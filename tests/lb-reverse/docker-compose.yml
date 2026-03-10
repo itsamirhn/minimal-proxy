@@ -1,0 +1,60 @@
+networks:
+  restricted:
+    internal: true   # httpbin + bridge only, no internet
+  backend:           # bridge + server1 + server2 + client, has internet
+
+services:
+  httpbin:
+    image: kennethreitz/httpbin
+    networks:
+      - restricted
+
+  # server1: VLESS server + portal (reverse tunnel endpoint)
+  server1:
+    build:
+      context: ../../xbridge
+    environment:
+      - XRAY_CONFIG={"log":{"loglevel":"debug"},"reverse":{"portals":[{"tag":"portal","domain":"reverse1.internal"}]},"inbounds":[{"tag":"vless-in","port":443,"listen":"0.0.0.0","protocol":"vless","settings":{"clients":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E"}],"decryption":"none"},"streamSettings":{"network":"tcp"}},{"tag":"socks-in","port":1080,"listen":"0.0.0.0","protocol":"socks","settings":{"auth":"noauth"}}],"outbounds":[{"tag":"direct","protocol":"freedom"}],"routing":{"rules":[{"inboundTag":["socks-in"],"outboundTag":"portal"},{"inboundTag":["vless-in"],"domain":["full:reverse1.internal"],"outboundTag":"portal"},{"inboundTag":["vless-in"],"outboundTag":"direct"}]}}
+    networks:
+      - backend
+    ports:
+      - "1081:1080"
+
+  # server2: VLESS server + portal (reverse tunnel endpoint)
+  server2:
+    build:
+      context: ../../xbridge
+    environment:
+      - XRAY_CONFIG={"log":{"loglevel":"debug"},"reverse":{"portals":[{"tag":"portal","domain":"reverse2.internal"}]},"inbounds":[{"tag":"vless-in","port":443,"listen":"0.0.0.0","protocol":"vless","settings":{"clients":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E"}],"decryption":"none"},"streamSettings":{"network":"tcp"}},{"tag":"socks-in","port":1080,"listen":"0.0.0.0","protocol":"socks","settings":{"auth":"noauth"}}],"outbounds":[{"tag":"direct","protocol":"freedom"}],"routing":{"rules":[{"inboundTag":["socks-in"],"outboundTag":"portal"},{"inboundTag":["vless-in"],"domain":["full:reverse2.internal"],"outboundTag":"portal"},{"inboundTag":["vless-in"],"outboundTag":"direct"}]}}
+    networks:
+      - backend
+    ports:
+      - "1082:1080"
+
+  # bridge: reverse tunnels to both servers + VLESS inbound with LB
+  bridge:
+    build:
+      context: ../../xbridge
+    environment:
+      - XRAY_CONFIG={"log":{"loglevel":"debug"},"reverse":{"bridges":[{"tag":"bridge1","domain":"reverse1.internal"},{"tag":"bridge2","domain":"reverse2.internal"}]},"inbounds":[{"tag":"direct-in","port":443,"listen":"0.0.0.0","protocol":"vless","settings":{"clients":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","level":0}],"decryption":"none"},"streamSettings":{"network":"tcp"}}],"outbounds":[{"tag":"proxy1","protocol":"vless","settings":{"vnext":[{"address":"server1","port":443,"users":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","encryption":"none"}]}]},"streamSettings":{"network":"tcp"}},{"tag":"proxy2","protocol":"vless","settings":{"vnext":[{"address":"server2","port":443,"users":[{"id":"E5242418-1606-4737-88BD-0E6B289DC21E","encryption":"none"}]}]},"streamSettings":{"network":"tcp"}},{"tag":"out","protocol":"freedom"}],"routing":{"rules":[{"inboundTag":["bridge1"],"domain":["full:reverse1.internal"],"outboundTag":"proxy1"},{"inboundTag":["bridge2"],"domain":["full:reverse2.internal"],"outboundTag":"proxy2"},{"inboundTag":["bridge1","bridge2"],"outboundTag":"out"},{"inboundTag":["direct-in"],"balancerTag":"lb"}],"balancers":[{"tag":"lb","selector":["proxy"],"strategy":{"type":"roundRobin"}}]}}
+    networks:
+      - restricted
+      - backend
+    depends_on:
+      - server1
+      - server2
+      - httpbin
+
+  # client: SOCKS5 -> bridge for normal LB path
+  client:
+    build:
+      context: ../../client
+    environment:
+      - VLESS_UUID=E5242418-1606-4737-88BD-0E6B289DC21E
+      - VLESS_ADDRESS=bridge
+    ports:
+      - "1080:1080"
+    networks:
+      - backend
+    depends_on:
+      - bridge
