@@ -2,8 +2,8 @@ services:
   server:
     build:
       context: ./server
-      args:
-        VLESS_UUID: ${VLESS_UUID}
+    environment:
+      - VLESS_UUID=${VLESS_UUID}
     expose:
       - "443"
 
@@ -19,12 +19,22 @@ services:
     depends_on:
       - server
 
+  xbridge:
+    build:
+      context: ./xbridge
+    environment:
+      - XRAY_CONFIG=${XRAY_CONFIG}
+    expose:
+      - "443"
+
   client:
     build:
       context: ./client
-      args:
-        VLESS_UUID: ${VLESS_UUID}
+    environment:
+      - VLESS_UUID=${VLESS_UUID}
+      - VLESS_ADDRESS=${VLESS_ADDRESS:-xbridge}
+      - VLESS_PORT=${VLESS_PORT:-443}
     ports:
       - "1080:1080"
     depends_on:
-      - bridge
+      - xbridge

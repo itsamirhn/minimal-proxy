@@ -1,9 +1,13 @@
 FROM teddysun/xray
 
-ARG VLESS_UUID
-RUN test -n "$VLESS_UUID" || { echo "VLESS_UUID build arg is required"; exit 1; }
+ENV VLESS_UUID=''
+ENV VLESS_ADDRESS='xbridge'
+ENV VLESS_PORT='443'
 
 COPY config.json /etc/xray/config.json
-RUN sed -i "s/VLESS_UUID_PLACEHOLDER/$VLESS_UUID/" /etc/xray/config.json
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 1080
+
+ENTRYPOINT ["/entrypoint.sh"]

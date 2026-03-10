@@ -1,11 +1,8 @@
 FROM teddysun/xray
 
-ENV VLESS_UUID=''
+ENV XRAY_CONFIG='{}'
 
-COPY config.json /etc/xray/config.json
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
-EXPOSE 443
 
 ENTRYPOINT ["/entrypoint.sh"]

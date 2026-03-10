@@ -15,8 +15,8 @@
       "settings": {
         "vnext": [
           {
-            "address": "bridge",
-            "port": 443,
+            "address": "VLESS_ADDRESS_PLACEHOLDER",
+            "port": VLESS_PORT_PLACEHOLDER,
             "users": [
               {
                 "id": "VLESS_UUID_PLACEHOLDER",

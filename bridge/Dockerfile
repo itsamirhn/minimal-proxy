@@ -1,6 +1,10 @@
+FROM golang:alpine AS builder
+
+RUN go install github.com/kevwan/tproxy@latest
+
 FROM alpine:latest
 
-RUN apk add --no-cache socat
+COPY --from=builder /go/bin/tproxy /usr/local/bin/tproxy
 
 ENV UPSTREAM_HOST=server
 ENV UPSTREAM_PORT=443
