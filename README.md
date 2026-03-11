@@ -10,6 +10,7 @@ Dockerized xray-core VLESS proxy setup.
 | `itsamirhn/minimal-proxy-client` | SOCKS5 client |
 | `itsamirhn/minimal-proxy-bridge` | TCP relay ([tproxy](https://github.com/kevwan/tproxy)) |
 | `itsamirhn/minimal-proxy-xbridge` | Xray with full config via `XRAY_CONFIG` env |
+| `itsamirhn/minimal-proxy-panel` | [3x-ui](https://github.com/MHSanaei/3x-ui) panel with S3 backup/restore |
 
 Available on Docker Hub and GHCR (`ghcr.io/itsamirhn/minimal-proxy/*`), for `linux/amd64` and `linux/arm64`.
 
@@ -25,6 +26,11 @@ Available on Docker Hub and GHCR (`ghcr.io/itsamirhn/minimal-proxy/*`), for `lin
 | bridge | `UPSTREAM_PORT` | `443` | |
 | bridge | `LISTEN_PORT` | `443` | |
 | xbridge | `XRAY_CONFIG` | — | Yes |
+| panel | `S3_ENDPOINT` | — | Yes |
+| panel | `S3_ACCESS_KEY` | — | Yes |
+| panel | `S3_SECRET_KEY` | — | Yes |
+| panel | `S3_BUCKET` | — | Yes |
+| panel | `S3_PROXY` | — | |
 
 ## Tests
 
